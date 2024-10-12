@@ -14,7 +14,7 @@ export function AboutUsComponent() {
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-5xl font-bold text-[#0073FE]">The Elite Club</CardTitle>
             <CardDescription className="text-xl text-blue-600 mt-2">
-              Anjuman-I-Islam's Kalsekar Technical Campus
+              Anjuman-I-Islam Kalsekar Technical Campus
             </CardDescription>
           </CardHeader>
           <Separator className="my-4 mx-auto w-1/2" />
@@ -86,8 +86,8 @@ export function AboutUsComponent() {
             <section className="text-center">
               <h3 className="text-3xl font-semibold text-[#0073FE] mb-4">Join Us</h3>
               <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
-                Whether you're a tech enthusiast or looking to enhance your skills, The Elite Club welcomes you! Join us
-                in our journey of discovery and innovation. Together, let's shape the future of technology.
+                Whether you are a tech enthusiast or looking to enhance your skills, The Elite Club welcomes you! Join us
+                in our journey of discovery and innovation. Together, let shape the future of technology.
               </p>
               <Link href="/teamRegister">
                 <Button className="bg-[#0073FE] hover:bg-blue-700 text-white text-lg px-8 py-6 rounded-full transition-all duration-300 hover:shadow-lg hover:-translate-y-1">

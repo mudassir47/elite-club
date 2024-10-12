@@ -1,12 +1,15 @@
 'use client'
 
+import { useEffect, useState } from 'react';
+import { ref, onValue } from 'firebase/database'; // Import Realtime Database functions
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Briefcase, Facebook, Twitter, Linkedin, Github } from "lucide-react"
+import { realtimeDB } from '@/lib/firebaseConfig'; // Adjusted to import from firebaseConfig
 
 type TeamMember = {
   name: string
-  designation: string
+  designation: string // Change this if you want to use a different field
   image: string
   socialMedia: {
     facebook?: string
@@ -15,57 +18,6 @@ type TeamMember = {
     github?: string
   }
 }
-
-const teamMembers: TeamMember[] = [
-  {
-    name: "John Doe",
-    designation: "Frontend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      facebook: "https://facebook.com/johndoe",
-      twitter: "https://twitter.com/johndoe",
-      linkedin: "https://linkedin.com/in/johndoe",
-      github: "https://github.com/johndoe"
-    }
-  },
-  {
-    name: "Jane Smith",
-    designation: "UI/UX Designer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      facebook: "https://facebook.com/janesmith",
-      twitter: "https://twitter.com/janesmith",
-      linkedin: "https://linkedin.com/in/janesmith"
-    }
-  },
-  {
-    name: "Mike Johnson",
-    designation: "Backend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/mikejohnson",
-      github: "https://github.com/mikejohnson"
-    }
-  },
-  {
-    name: "Emily Brown",
-    designation: "Project Manager",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/emilybrown",
-      twitter: "https://twitter.com/emilybrown"
-    }
-  },
-  {
-    name: "Alex Lee",
-    designation: "Data Scientist",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      github: "https://github.com/alexlee",
-      linkedin: "https://linkedin.com/in/alexlee"
-    }
-  }
-]
 
 const SocialIcon = ({ platform, url }: { platform: keyof TeamMember['socialMedia'], url: string }) => {
   const icons = {
@@ -84,6 +36,32 @@ const SocialIcon = ({ platform, url }: { platform: keyof TeamMember['socialMedia
 }
 
 export default function TeamPage() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    const teamRef = ref(realtimeDB, 'teams'); // Use realtimeDB here
+
+    // Fetch team members from Firebase
+    onValue(teamRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const members: TeamMember[] = Object.keys(data).map(key => ({
+          name: data[key].name,
+          designation: data[key].designation, // Change to a relevant field if needed
+          image: data[key].photoURL || '', // Ensure the image field is retrieved correctly
+          socialMedia: {
+            facebook: data[key].facebook,
+            twitter: data[key].twitter,
+            linkedin: data[key].linkedin,
+            github: data[key].github,
+          }
+        }));
+        setTeamMembers(members);
+      }
+    });
+
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-16">
       <h2 className="text-3xl font-bold text-center text-[#0075FF] mb-12">
@@ -106,7 +84,9 @@ export default function TeamPage() {
               </p>
               <div className="flex space-x-3">
                 {Object.entries(member.socialMedia).map(([platform, url]) => (
-                  <SocialIcon key={platform} platform={platform as keyof TeamMember['socialMedia']} url={url} />
+                  url ? ( // Only render the icon if the URL is present
+                    <SocialIcon key={platform} platform={platform as keyof TeamMember['socialMedia']} url={url} />
+                  ) : null
                 ))}
               </div>
             </CardContent>

@@ -1,50 +1,54 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { AlertCircle, CheckCircle2, Loader2, Award, Lock } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import confetti from 'canvas-confetti'
-import { motion, AnimatePresence } from "framer-motion"
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { AlertCircle, CheckCircle2, Loader2, Award, Lock } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { motion, AnimatePresence } from "framer-motion";
+// Import Firebase here
+import { getDatabase, ref, get } from "firebase/database";
 
 export function VerifyCertificateComponent() {
-  const [authCode, setAuthCode] = useState("")
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [verificationResult, setVerificationResult] = useState<"success" | "error" | null>(null)
+  const router = useRouter();
+  const [authCode, setAuthCode] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<"success" | "error" | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (authCode.trim() === "") return
+    e.preventDefault();
+    const trimmedAuthCode = authCode.trim();
+    if (trimmedAuthCode === "") return;
 
-    setIsVerifying(true)
-    setVerificationResult(null)
+    setIsVerifying(true);
+    setVerificationResult(null);
 
-    // Simulating API call
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // Check the authentication code in Firebase
+    const db = getDatabase();
+    const authCodeRef = ref(db, 'certificates/' + trimmedAuthCode); // Adjusted path
 
-    // For demonstration, we'll consider codes starting with 'VALID' as successful
-    if (authCode.toUpperCase().startsWith("VALID")) {
-      setVerificationResult("success")
-      // Trigger confetti effect
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      })
-    } else {
-      setVerificationResult("error")
+    try {
+      const snapshot = await get(authCodeRef);
+      console.log(snapshot.val()); // Log the data for debugging
+      if (snapshot.exists()) {
+        // Code exists in the database
+        setVerificationResult("success");
+        
+        // Redirect to the certificate page with the auth code
+        router.push(`/certificate/${trimmedAuthCode}`);
+      } else {
+        // Code does not exist in the database
+        setVerificationResult("error");
+      }
+    } catch (error) {
+      console.error("Error fetching authentication code: ", error);
+      setVerificationResult("error");
     }
 
-    setIsVerifying(false)
-  }
-
-  useEffect(() => {
-    // Clean up confetti on component unmount
-    return () => confetti.reset()
-  }, [])
+    setIsVerifying(false);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center p-4">
@@ -60,7 +64,7 @@ export function VerifyCertificateComponent() {
             </div>
             <CardTitle className="text-2xl font-bold text-center">Verify Your Certificate</CardTitle>
             <CardDescription className="text-center text-blue-100">
-              Enter your authentication code to verify the certificate's authenticity.
+              Enter your authentication code to verify the certificate authenticity.
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-6">
@@ -133,5 +137,5 @@ export function VerifyCertificateComponent() {
         </Card>
       </motion.div>
     </div>
-  )
+  );
 }

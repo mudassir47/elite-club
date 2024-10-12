@@ -13,12 +13,22 @@ const FormPage = () => {
     name: string;
     email: string;
     team: string;
+    designation: string; // New property for designation
     photo: File | null;
+    facebook?: string;
+    twitter?: string;
+    linkedin?: string;
+    github?: string;
   }>({
     name: "",
     email: "",
     team: "",
+    designation: "", // Initialize designation
     photo: null,
+    facebook: "",
+    twitter: "",
+    linkedin: "",
+    github: "",
   });
   const [uploading, setUploading] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
@@ -32,7 +42,7 @@ const FormPage = () => {
         await fetchUserData(currentUser.uid);
       } else {
         setUser(null);
-        setFormData({ name: "", email: "", team: "", photo: null });
+        setFormData({ name: "", email: "", team: "", designation: "", photo: null }); // Reset designation
       }
     });
 
@@ -43,7 +53,7 @@ const FormPage = () => {
     const db = getDatabase();
     const userRef = dbRef(db, `users/${uid}`);
     const snapshot = await get(userRef);
-    
+
     if (snapshot.exists()) {
       const userData = snapshot.val();
       setFormData((prev) => ({
@@ -56,7 +66,7 @@ const FormPage = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -89,12 +99,17 @@ const FormPage = () => {
       await set(dbRef(db, `teams/${user?.uid}`), {
         name: formData.name,
         email: formData.email,
+        designation: formData.designation, // Include designation in the database
         photoURL,
+        facebook: formData.facebook || "",
+        twitter: formData.twitter || "",
+        linkedin: formData.linkedin || "",
+        github: formData.github || "",
       });
 
       console.log("Form submitted:", formData);
       setShowPopup(true);
-      setFormData({ name: "", email: "", team: "", photo: null });
+      setFormData({ name: "", email: "", team: "", designation: "", photo: null }); // Reset form data
 
     } catch (error) {
       console.error("Error uploading photo:", error);
@@ -147,6 +162,21 @@ const FormPage = () => {
               />
             </div>
             <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Designation</label>
+              <select
+                name="designation"
+                value={formData.designation}
+                onChange={handleChange}
+                required
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              >
+                <option value="">Select designation</option>
+                <option value="Technical Member">Technical Member</option>
+                <option value="Marketing Team">Marketing Team</option>
+                <option value="Designing Team">Designing Team</option>
+              </select>
+            </div>
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700">Photo</label>
               <input
                 type="file"
@@ -154,6 +184,50 @@ const FormPage = () => {
                 onChange={handleFileChange}
                 required
                 className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Facebook (Optional)</label>
+              <input
+                type="url"
+                name="facebook"
+                value={formData.facebook}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                placeholder="Facebook profile link"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">Twitter (Optional)</label>
+              <input
+                type="url"
+                name="twitter"
+                value={formData.twitter}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                placeholder="Twitter profile link"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">LinkedIn (Optional)</label>
+              <input
+                type="url"
+                name="linkedin"
+                value={formData.linkedin}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                placeholder="LinkedIn profile link"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700">GitHub (Optional)</label>
+              <input
+                type="url"
+                name="github"
+                value={formData.github}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                placeholder="GitHub profile link"
               />
             </div>
             <button
@@ -181,7 +255,7 @@ const FormPage = () => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-screen">
-          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg text-center">
+          <div className="bg-gray-800 text-black p-6 rounded-lg shadow-lg text-center">
             <h1 className="text-xl font-bold text-red-900">Login or Register First</h1>
             <p className="mt-2 text-red-200">You must be logged in to fill out the team details.</p>
             <button

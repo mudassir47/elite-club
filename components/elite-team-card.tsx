@@ -5,6 +5,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Facebook, Twitter, Linkedin, Github, ChevronLeft, ChevronRight, Briefcase, Pause, Play } from "lucide-react"
 import { useRef, useState, useEffect, useCallback } from "react"
+import { ref, onValue } from "firebase/database" // Import Realtime DB functions
+import { realtimeDB } from "@/lib/firebaseConfig"
+
 
 type TeamMember = {
   name: string
@@ -18,105 +21,65 @@ type TeamMember = {
   }
 }
 
-const teamMembers: TeamMember[] = [
-  {
-    name: "John Doe",
-    designation: "Frontend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      facebook: "https://facebook.com/johndoe",
-      twitter: "https://twitter.com/johndoe",
-      linkedin: "https://linkedin.com/in/johndoe",
-      github: "https://github.com/johndoe"
-    }
-  },
-  {
-    name: "Jane Smith",
-    designation: "UI/UX Designer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      facebook: "https://facebook.com/janesmith",
-      twitter: "https://twitter.com/janesmith",
-      linkedin: "https://linkedin.com/in/janesmith"
-    }
-  },
-  {
-    name: "Mike Johnson",
-    designation: "Backend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/mikejohnson",
-      github: "https://github.com/mikejohnson"
-    }
-  },
-  {
-    name: "Mike Johnson",
-    designation: "Backend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/mikejohnson",
-      github: "https://github.com/mikejohnson"
-    }
-  },
-  {
-    name: "Mike Johnson",
-    designation: "Backend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/mikejohnson",
-      github: "https://github.com/mikejohnson"
-    }
-  },
-  {
-    name: "Mike Johnson",
-    designation: "Backend Developer",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/mikejohnson",
-      github: "https://github.com/mikejohnson"
-    }
-  },
-  {
-    name: "Emily Brown",
-    designation: "Project Manager",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      linkedin: "https://linkedin.com/in/emilybrown",
-      twitter: "https://twitter.com/emilybrown"
-    }
-  },
-  {
-    name: "Alex Lee",
-    designation: "Data Scientist",
-    image: "/placeholder.svg?height=200&width=200",
-    socialMedia: {
-      github: "https://github.com/alexlee",
-      linkedin: "https://linkedin.com/in/alexlee"
-    }
-  }
-  
-]
-
-const SocialIcon = ({ platform, url }: { platform: keyof TeamMember['socialMedia'], url: string }) => {
-  const icons = {
-    facebook: Facebook,
-    twitter: Twitter,
-    linkedin: Linkedin,
-    github: Github
-  }
-  const Icon = icons[platform]
-  return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#0075FF] transition-colors">
-      <Icon size={18} />
-    </a>
-  )
-}
-
 export function EliteTeamCardComponent() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(true)
   const [isAutoScrolling, setIsAutoScrolling] = useState(true)
+
+  // Fetch team members from Firebase Realtime Database
+  useEffect(() => {
+    const fetchTeamData = () => {
+      const teamRef = ref(realtimeDB, 'teams')
+
+      onValue(teamRef, (snapshot) => {
+        const data = snapshot.val()
+
+        if (data) {
+          const members: TeamMember[] = []
+
+          // Loop through the data and only include approved members
+          Object.keys(data).forEach((key) => {
+            const teamMember = data[key]
+            if (teamMember.approved) {
+              members.push({
+                name: teamMember.name,
+                designation: teamMember.designation || "Team Member", // Add default designation if not present
+                image: teamMember.photoURL || "/placeholder.svg?height=200&width=200",
+                socialMedia: {
+                  facebook: teamMember.facebook,
+                  twitter: teamMember.twitter,
+                  linkedin: teamMember.linkedin,
+                  github: teamMember.github
+                }
+              })
+            }
+          })
+
+          // Set the team members state
+          setTeamMembers(members)
+        }
+      })
+    }
+
+    fetchTeamData()
+  }, [])
+
+  const SocialIcon = ({ platform, url }: { platform: keyof TeamMember['socialMedia'], url: string }) => {
+    const icons = {
+      facebook: Facebook,
+      twitter: Twitter,
+      linkedin: Linkedin,
+      github: Github
+    }
+    const Icon = icons[platform]
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-[#0075FF] transition-colors">
+        <Icon size={18} />
+      </a>
+    )
+  }
 
   const handleScroll = useCallback(() => {
     if (scrollContainerRef.current) {
@@ -141,8 +104,7 @@ export function EliteTeamCardComponent() {
         const { current } = scrollContainerRef
         if (current) {
           if (current.scrollLeft + current.clientWidth >= current.scrollWidth) {
-            // Reset to the start smoothly
-            current.scrollTo({ left: 0, behavior: 'smooth' })
+            current.scrollTo({ left: 0, behavior: 'smooth' }) // Reset to the start smoothly
           } else {
             current.scrollBy({ left: 1, behavior: 'smooth' })
           }
