@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Image, Play, X } from "lucide-react"
+import { getDatabase, ref, onValue } from "firebase/database"
 
 type MediaItem = {
   id: string
@@ -17,62 +18,35 @@ type MediaItem = {
   description: string
 }
 
-const mediaItems: MediaItem[] = [
-  {
-    id: "1",
-    type: "image",
-    thumbnail: "/placeholder.svg?height=400&width=600",
-    source: "/placeholder.svg?height=1080&width=1920",
-    title: "Hackathon Winners",
-    description: "Our team celebrating their victory at the annual coding competition."
-  },
-  {
-    id: "2",
-    type: "video",
-    thumbnail: "/placeholder.svg?height=400&width=600",
-    source: "https://example.com/video1.mp4",
-    title: "Workshop Highlights",
-    description: "Exciting moments from our latest tech workshop."
-  },
-  {
-    id: "3",
-    type: "image",
-    thumbnail: "/placeholder.svg?height=400&width=600",
-    source: "/placeholder.svg?height=1080&width=1920",
-    title: "Team Building Event",
-    description: "Elite Club members enjoying our annual team building retreat."
-  },
-  {
-    id: "4",
-    type: "video",
-    thumbnail: "/placeholder.svg?height=400&width=600",
-    source: "https://example.com/video2.mp4",
-    title: "Guest Lecture Series",
-    description: "Highlights from our recent guest lecture on AI and Machine Learning."
-  },
-  {
-    id: "5",
-    type: "image",
-    thumbnail: "/placeholder.svg?height=400&width=600",
-    source: "/placeholder.svg?height=1080&width=1920",
-    title: "Project Showcase",
-    description: "Students presenting their innovative projects at our semester-end expo."
-  },
-  {
-    id: "6",
-    type: "image",
-    thumbnail: "/placeholder.svg?height=400&width=600",
-    source: "/placeholder.svg?height=1080&width=1920",
-    title: "Networking Event",
-    description: "Elite Club members connecting with industry professionals."
-  }
-]
-
 export function EliteClubGalleryComponent() {
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([])
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null)
   const [filter, setFilter] = useState<"all" | "images" | "videos">("all")
 
-  const filteredItems = mediaItems.filter(item => 
+  useEffect(() => {
+    const db = getDatabase()
+    const mediaRef = ref(db, 'gallery/images') // Adjust path as necessary
+
+    onValue(mediaRef, (snapshot) => {
+      const data = snapshot.val()
+      const items: MediaItem[] = []
+
+      for (const key in data) {
+        const item = data[key]
+        items.push({
+          id: key,
+          type: item.type,
+          thumbnail: item.thumbnail || item.url, // Use your thumbnail logic
+          source: item.url, // Assuming 'url' holds the media source
+          title: item.title || "Untitled", // Add default title if needed
+          description: item.description || "No description available." // Add default description if needed
+        })
+      }
+      setMediaItems(items)
+    })
+  }, [])
+
+  const filteredItems = mediaItems.filter(item =>
     filter === "all" || (filter === "images" && item.type === "image") || (filter === "videos" && item.type === "video")
   )
 
