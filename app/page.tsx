@@ -17,17 +17,16 @@ export default function Home() {
       <Companies />
       <EliteTeamCardComponent/>
       <Buyers />
-      <br />
-      <br/>  <br/>  <br/>
-      <br/>
-      <br/>
-      
+       
+    
+     <br /><br /><br /><br /><br /><br /><br />
       {/* <Provide /> 
       <Why />
       <Network />
       <Clientsay />  */}
       <Newsletter />
      
+ 
       
     </main>
   )
