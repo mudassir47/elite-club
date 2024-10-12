@@ -13,6 +13,7 @@ export default function Home() {
   return (
     <main>
       <Banner />
+      
       <Companies />
       <EliteTeamCardComponent/>
       <Buyers />
